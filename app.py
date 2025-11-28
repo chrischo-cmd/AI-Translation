@@ -15,7 +15,7 @@ st.markdown("""
 """)
 
 # ⭐ API Key 자동 설정 (완전 숨김)
-api_key = "AIzaSyDZ1iTD_zBUB3RhJmFgTOX2Q54uWKqDkuc"
+api_key = "**"
 
 # Google Sheets 인증 함수
 def get_google_sheets_client():
