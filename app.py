@@ -1,4 +1,4 @@
-pythonimport streamlit as st
+import streamlit as st
 import pandas as pd
 import google.generativeai as genai
 import gspread
@@ -150,7 +150,7 @@ def translate_text(text):
 def col_letter_to_index(letter):
     return ord(letter.upper()) - 65
 
-# 탭 구성 (4개로 확장!)
+# 탭 구성
 tab1, tab2, tab3, tab4 = st.tabs([
     "💬 실시간 문장 번역",
     "🔗 Google Sheets 번역",
@@ -189,7 +189,7 @@ with tab1:
             else:
                 st.error(translated_text)
 
-# [Tab 2] Google Sheets 번역 (신규!)
+# [Tab 2] Google Sheets 번역
 with tab2:
     st.subheader("🔗 Google Sheets 링크 번역")
     st.info(f"현재 설정: {category} / {difficulty}")
@@ -218,18 +218,15 @@ with tab2:
         else:
             try:
                 with st.spinner("Google Sheets 연결 중..."):
-                    # URL에서 스프레드시트 ID 추출
                     if '/d/' in sheets_url:
                         sheet_id = sheets_url.split('/d/')[1].split('/')[0]
                     else:
                         st.error("올바른 Google Sheets URL이 아닙니다")
                         st.stop()
                     
-                    # Google Sheets 클라이언트
                     gc = get_google_sheets_client()
                     if not gc:
                         st.warning("⚠️ Google Sheets API 인증이 설정되지 않았습니다. 공개 시트만 읽을 수 있습니다.")
-                        # 공개 시트를 pandas로 직접 읽기 시도
                         try:
                             csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
                             df = pd.read_csv(csv_url)
@@ -239,7 +236,6 @@ with tab2:
                             st.info("시트가 '누구나 링크가 있는 사용자'에게 공개되어 있는지 확인하세요")
                             st.stop()
                     else:
-                        # 인증된 경우 gspread 사용
                         spreadsheet = gc.open_by_key(sheet_id)
                         if sheet_name:
                             worksheet = spreadsheet.worksheet(sheet_name)
@@ -253,12 +249,10 @@ with tab2:
                     st.success(f"✅ 시트 로드 완료! (총 {len(df)}행)")
                     st.dataframe(df.head(), use_container_width=True)
                 
-                # 번역 시작
                 with st.spinner("번역 중..."):
                     idx_src = col_letter_to_index(col_source)
                     idx_tgt = col_letter_to_index(col_target)
                     
-                    # 타겟 컬럼이 없으면 추가
                     if len(df.columns) <= idx_tgt:
                         df[f'Column_{col_target}'] = ""
                     
@@ -280,7 +274,6 @@ with tab2:
                         else:
                             translations.append("")
                         
-                        # 결과를 데이터프레임에 저장
                         if idx_tgt < len(df.columns):
                             df.iat[index, idx_tgt] = translated_text
                         
@@ -292,7 +285,6 @@ with tab2:
                     
                     st.success("🎉 번역 완료!")
                     
-                    # Google Sheets에 쓰기 시도
                     if can_write and gc:
                         try:
                             with st.spinner("Google Sheets에 저장 중..."):
@@ -315,7 +307,6 @@ with tab2:
                             st.warning(f"Google Sheets 저장 실패: {e}")
                             st.info("엑셀 파일로 다운로드하세요")
                     
-                    # 다운로드 옵션 제공
                     output = BytesIO()
                     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
                         df.to_excel(writer, index=False, sheet_name='Sheet1')
@@ -348,7 +339,6 @@ with tab3:
         
         if st.button("🚀 번역 시작", type="primary", key="translate_file"):
             try:
-                # 파일 읽기
                 if uploaded_file.name.endswith('.csv'):
                     df = pd.read_csv(uploaded_file)
                 else:
@@ -357,12 +347,10 @@ with tab3:
                 idx_src = col_letter_to_index(col_source)
                 idx_tgt = col_letter_to_index(col_target)
                 
-                # 컬럼 확보
                 if len(df.columns) <= idx_tgt:
                     df[f'Column {col_target}'] = ""
                     idx_tgt = len(df.columns) - 1
                 
-                # 번역 루프
                 progress_bar = st.progress(0)
                 total_rows = len(df)
                 preview_container = st.empty()
@@ -385,7 +373,6 @@ with tab3:
                 
                 st.success("🎉 번역 완료! 아래 버튼을 눌러 다운로드하세요.")
                 
-                # 다운로드 버튼
                 output = BytesIO()
                 if uploaded_file.name.endswith('.csv'):
                     df.to_csv(output, index=False, encoding='utf-8-sig')
