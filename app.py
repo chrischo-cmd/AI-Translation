@@ -1,4 +1,4 @@
-import streamlit as st
+pythonimport streamlit as st
 import pandas as pd
 import google.generativeai as genai
 import gspread
@@ -14,9 +14,6 @@ st.markdown("""
 **Google Sheets + 파일 업로드 + 실시간 번역 모두 지원**
 """)
 
-# ⭐ API Key 자동 설정 (완전 숨김)
-api_key = "**"
-
 # Google Sheets 인증 함수
 def get_google_sheets_client():
     try:
@@ -25,14 +22,12 @@ def get_google_sheets_client():
             'https://www.googleapis.com/auth/drive'
         ]
         
-        # Streamlit Secrets 사용 (배포 시)
         if 'gcp_service_account' in st.secrets:
             credentials = Credentials.from_service_account_info(
                 st.secrets["gcp_service_account"],
                 scopes=scope
             )
         else:
-            # 로컬에서는 JSON 파일 사용
             credentials = Credentials.from_service_account_file(
                 'service-account-key.json',
                 scopes=scope
@@ -42,8 +37,22 @@ def get_google_sheets_client():
     except Exception as e:
         return None
 
-# 사이드바 설정
+# ⭐ 사이드바에서 API Key 입력받기
 with st.sidebar:
+    st.header("🔑 API Key 설정")
+    api_key = st.text_input(
+        "Gemini API Key:",
+        type="password",
+        placeholder="AIzaSy...",
+        help="https://aistudio.google.com/apikey"
+    )
+    
+    if not api_key:
+        st.warning("⚠️ API Key를 입력해주세요!")
+        st.info("👉 [API Key 발급받기](https://aistudio.google.com/apikey)")
+        st.stop()
+    
+    st.divider()
     st.header("📂 Translation Settings")
     
     category = st.selectbox(
