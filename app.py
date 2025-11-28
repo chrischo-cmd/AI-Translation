@@ -37,7 +37,7 @@ def get_google_sheets_client():
     except Exception as e:
         return None
 
-# ⭐ 사이드바에서 API Key 입력받기
+# ⭐ 사이드바 설정
 with st.sidebar:
     st.header("🔑 API Key 설정")
     api_key = st.text_input(
@@ -59,9 +59,10 @@ with st.sidebar:
         "Category",
         ["Daily Life", "Business", "Travel", "News", "Academic", "Entertainment", "Health", "Technology"]
     )
-    difficulty = st.selectbox(
-        "Difficulty",
-        ["0-Level", "Beginner", "Intermediate", "Advanced"]
+    
+    level = st.selectbox(
+        "Level",
+        ["1-2 (Beginner)", "3-4 (Elementary)", "5-6 (Intermediate)", "7-8 (Advanced)"]
     )
     
     st.divider()
@@ -100,24 +101,180 @@ common_errors = """
 10. **Terms:** 전문 용어는 업계 표준 번역 사용
 """
 
+# 카테고리별 상세 지침
 category_guidelines = {
-    "Daily Life": "기본 말투: polite (~요), 자연스러운 구어체 우선",
-    "Business": "기본 말투: polite~formal, 정중하고 전문적인 톤",
-    "Travel": "기본 말투: polite, 실용적이고 명확하게",
-    "News": "기본 말투: formal (-다/-습니다), 객관적이고 간결한 서술",
-    "Academic": "기본 말투: polite~formal, 논리적이고 명확한 표현",
-    "Entertainment": "기본 말투: casual~polite, 생동감 있고 재미있게",
-    "Health": "기본 말투: polite~formal, 정확하고 신중하게",
-    "Technology": "기본 말투: polite~formal, 전문적이되 이해하기 쉽게"
+    "Daily Life": """
+**특징:**
+- 자연스러운 구어체 우선
+- 외래어보다 한국어 대체어 선호
+- 실생활 표현 그대로
+
+**기본 말투:** polite (~요)
+
+**말투 자동 조정:**
+- 원문에 casual 신호 (Wanna, Gonna, Dude, bro) → casual 전환
+- 원문에 formal 신호 (Would you, Could you, Sir/Ma'am) → formal 전환
+- 대화 맥락이 있으면 관계 파악하여 조정
+
+**예시:**
+- "Wanna grab lunch?" → casual → "점심 먹을래?"
+- "Would you like to have lunch?" → polite → "점심 드실래요?"
+- "Let's have lunch" → 기본 polite → "점심 먹어요"
+""",
+    
+    "Business": """
+**특징:**
+- 정중하고 전문적인 톤
+- 업무 용어는 외래어 허용 (미팅, 이메일, 리포트 등)
+- 격식 있는 표현
+
+**기본 말투:** polite~formal
+
+**예시:**
+- "Let's schedule a meeting" → "회의 일정을 잡겠습니다"
+- "I'll follow up on this" → "이 건은 제가 후속 조치하겠습니다"
+- "Could you review the proposal?" → "제안서 검토 부탁드립니다"
+""",
+    
+    "Travel": """
+**특징:**
+- 실용적이고 명확하게
+- 여행 상황별 맥락 반영
+- 지명/고유명사는 외래어 유지
+
+**기본 말투:** polite
+
+**예시:**
+- "Where's the nearest subway station?" → "가장 가까운 지하철역이 어디예요?"
+- "I'd like to check in" → "체크인하려고요"
+- "How much is this?" → "이거 얼마예요?"
+""",
+    
+    "News": """
+**특징:**
+- 객관적이고 간결한 서술
+- 감정 표현 배제
+- 사실 전달 중심
+- 전문 용어 정확히
+
+**기본 말투:** formal (-다/-습니다)
+
+**예시:**
+- "The company announced a major restructuring" → "회사는 대규모 구조조정을 발표했다"
+- "Experts predict economic growth will slow" → "전문가들은 경제 성장이 둔화될 것으로 예측한다"
+- "The government introduced new regulations" → "정부는 새로운 규제를 도입했다"
+""",
+    
+    "Academic": """
+**특징:**
+- 논리적이고 명확한 표현
+- 학술 용어 정확히
+- 논거가 분명하게
+
+**기본 말투:** polite~formal
+
+**예시:**
+- "In my opinion, this approach is more effective" → "제 생각에는 이 접근 방식이 더 효과적입니다"
+- "Research shows that students benefit from" → "연구에 따르면 학생들은 ~로부터 도움을 받는다"
+- "Let's discuss the pros and cons" → "장단점을 논의해 봅시다"
+""",
+    
+    "Entertainment": """
+**특징:**
+- 생동감 있고 재미있게
+- 감정/분위기 살리기
+- 유행어/신조어 적절히 활용
+
+**기본 말투:** casual~polite
+
+**예시:**
+- "That's hilarious!" → "완전 웃겨!" / "진짜 재밌네!"
+- "I'm a huge fan of this show" → "이 프로 완전 팬이야"
+- "The plot twist was amazing" → "반전이 대박이었어"
+""",
+    
+    "Health": """
+**특징:**
+- 정확하고 신중하게
+- 의학 용어는 한글 또는 설명 추가
+- 오해 없도록 명확히
+
+**기본 말투:** polite~formal
+
+**예시:**
+- "Take this medication twice a day" → "이 약은 하루 두 번 복용하세요"
+- "You should get enough rest" → "충분한 휴식이 필요합니다"
+- "Consult your doctor if symptoms persist" → "증상이 지속되면 의사와 상담하세요"
+""",
+    
+    "Technology": """
+**특징:**
+- 전문적이되 이해하기 쉽게
+- 기술 용어는 외래어 유지
+- 약어는 그대로 (API, AI, UI 등)
+
+**기본 말투:** polite~formal
+
+**예시:**
+- "Update the software to the latest version" → "소프트웨어를 최신 버전으로 업데이트하세요"
+- "The AI system processes data in real-time" → "AI 시스템은 데이터를 실시간으로 처리한다"
+- "Click on the settings icon" → "설정 아이콘을 클릭하세요"
+"""
 }
 
-difficulty_guidelines = {
-    "0-Level": "가장 기본적이고 쉬운 단어만, 매우 짧고 단순한 문장",
-    "Beginner": "일상적이고 기본적인 어휘, 짧고 단순한 문장 구조",
-    "Intermediate": "자연스러운 관용 표현 활용, 뉘앙스 살리기",
-    "Advanced": "원어민 수준의 자연스러움, 문화적 뉘앙스까지 반영"
+# 레벨별 상세 지침
+level_guidelines = {
+    "1-2 (Beginner)": """
+**특징:**
+- 가장 기본적이고 쉬운 단어
+- 짧고 단순한 문장 구조
+- 한 문장에 하나의 의미만
+- 어려운 표현은 쉽게 풀어서
+
+**예시:**
+- "I'm feeling under the weather" → "몸이 안 좋아" / "아파"
+- "Let's call it a day" → "오늘은 여기까지 하자"
+- "I'm swamped with work" → "일이 너무 많아"
+""",
+    
+    "3-4 (Elementary)": """
+**특징:**
+- 일상적인 표현 사용
+- 기본적인 관용구 포함 가능
+- 자연스럽되 복잡하지 않게
+
+**예시:**
+- "I'm feeling under the weather" → "컨디션이 별로야"
+- "Let's call it a day" → "오늘은 이만 마무리하자"
+- "I'm swamped with work" → "일이 엄청 많아"
+""",
+    
+    "5-6 (Intermediate)": """
+**특징:**
+- 자연스러운 관용 표현 활용
+- 뉘앙스 살리기
+- 다양한 어휘 사용
+
+**예시:**
+- "I'm feeling under the weather" → "몸 상태가 좋지 않아"
+- "Let's call it a day" → "오늘은 여기서 마치자"
+- "I'm swamped with work" → "일에 치여 있어" / "일이 산더미야"
+""",
+    
+    "7-8 (Advanced)": """
+**특징:**
+- 원어민 수준의 자연스러움
+- 문화적 뉘앙스까지 반영
+- 상황에 따른 미묘한 차이 표현
+
+**예시:**
+- "I'm feeling under the weather" → "몸이 영 개운치 않네"
+- "Let's call it a day" → "오늘은 이쯤에서 접자"
+- "I'm swamped with work" → "일에 파묻혀 있어" / "일 때문에 정신이 하나도 없어"
+"""
 }
 
+# 마스터 프롬프트 생성
 master_prompt = f"""
 You are Uphone's Localization Specialist.
 Translate the text from **English** to **Korean**.
@@ -126,12 +283,18 @@ Translate the text from **English** to **Korean**.
 
 {common_errors}
 
-[Category: {category}] {category_guidelines[category]}
-[Difficulty: {difficulty}] {difficulty_guidelines[difficulty]}
+# Category-Specific Guidelines
+[Category: {category}]
+{category_guidelines[category]}
+
+# Level-Specific Guidelines
+[Level: {level}]
+{level_guidelines[level]}
 
 [Technical Instruction]
-- Only output the translated Korean text.
-- Do not add explanations.
+- AI will automatically detect content type (Dialogue/Script/Article) and adjust tone accordingly
+- Only output the translated Korean text
+- Do not add explanations
 """
 
 # 번역 함수
@@ -161,7 +324,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
 # [Tab 1] 실시간 문장 번역
 with tab1:
     st.subheader("💬 실시간 문장 번역")
-    st.info(f"현재 설정: {category} / {difficulty}")
+    st.info(f"현재 설정: {category} / {level}")
     
     input_text = st.text_area(
         "영어 문장을 입력하세요:",
@@ -192,7 +355,7 @@ with tab1:
 # [Tab 2] Google Sheets 번역
 with tab2:
     st.subheader("🔗 Google Sheets 링크 번역")
-    st.info(f"현재 설정: {category} / {difficulty}")
+    st.info(f"현재 설정: {category} / {level}")
     
     st.markdown("""
     **사용 방법:**
@@ -330,7 +493,7 @@ with tab2:
 # [Tab 3] 파일 업로드 번역
 with tab3:
     st.subheader("⚡ 엑셀/CSV 파일 자동 번역")
-    st.info(f"현재 설정: {category} / {difficulty}")
+    st.info(f"현재 설정: {category} / {level}")
     
     uploaded_file = st.file_uploader("엑셀 또는 CSV 파일을 업로드하세요", type=['xlsx', 'csv'])
     
