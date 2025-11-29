@@ -62,7 +62,7 @@ with st.sidebar:
     
     level = st.selectbox(
         "Level",
-        ["1-2 (Beginner)", "3-4 (Elementary)", "5-6 (Intermediate)", "7-8 (Advanced)"]
+        ["Beginner", "Elementary", "Intermediate", "Advanced"]
     )
     
     st.divider()
@@ -224,7 +224,7 @@ category_guidelines = {
 
 # 레벨별 상세 지침
 level_guidelines = {
-    "1-2 (Beginner)": """
+    "Beginner": """
 **특징:**
 - 가장 기본적이고 쉬운 단어
 - 짧고 단순한 문장 구조
@@ -237,7 +237,7 @@ level_guidelines = {
 - "I'm swamped with work" → "일이 너무 많아"
 """,
     
-    "3-4 (Elementary)": """
+    "Elementary": """
 **특징:**
 - 일상적인 표현 사용
 - 기본적인 관용구 포함 가능
@@ -249,7 +249,7 @@ level_guidelines = {
 - "I'm swamped with work" → "일이 엄청 많아"
 """,
     
-    "5-6 (Intermediate)": """
+    "Intermediate": """
 **특징:**
 - 자연스러운 관용 표현 활용
 - 뉘앙스 살리기
@@ -261,7 +261,7 @@ level_guidelines = {
 - "I'm swamped with work" → "일에 치여 있어" / "일이 산더미야"
 """,
     
-    "7-8 (Advanced)": """
+    "Advanced": """
 **특징:**
 - 원어민 수준의 자연스러움
 - 문화적 뉘앙스까지 반영
